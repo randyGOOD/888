@@ -129,54 +129,7 @@
             padding: 15px;
             border-radius: 4px;
         }
-        /* 檔案上傳區塊樣式 */
-        .file-upload-group {
-            margin-top: 10px;
-            border: 1px dashed #ccc; /* 虛線邊框 */
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
-            position: relative; /* 為了絕對定位 input[type="file"] */
-        }
-        /* 隱藏原生檔案輸入框，只顯示自定義的 label */
-        .file-upload-group input[type="file"] {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0; /* 完全透明 */
-            cursor: pointer;
-        }
-        /* 自定義檔案上傳按鈕的樣式 */
-        .file-upload-group .file-label {
-            display: block;
-            color: #007bff; /* 藍色文字 */
-            font-weight: bold;
-            cursor: pointer;
-            padding: 5px 0;
-        }
-        /* 顯示檔案名稱的樣式 */
-        .file-upload-group .file-name {
-            font-size: 0.9em;
-            color: #555;
-            margin-top: 5px;
-        }
-        /* 上傳狀態文字的樣式 */
-        .file-upload-group .upload-status {
-            font-size: 0.85em;
-            margin-top: 5px;
-        }
-        .file-upload-group .upload-status.uploading {
-            color: #ffc107; /* 黃色表示上傳中 */
-        }
-        .file-upload-group .upload-status.success {
-            color: #28a745; /* 綠色表示上傳成功 */
-        }
-        .file-upload-group .upload-status.error {
-            color: #dc3545; /* 紅色表示上傳失敗 */
-        }
-
+        
         /* 送出按鈕樣式 */
         button {
             background-color: #4CAF50; /* 綠色按鈕 */
@@ -321,35 +274,6 @@
             <input type="text" id="referrerName" name="介紹人姓名" placeholder="若有介紹人，請輸入其姓名">
         </div>
 
-        <div class="form-group">
-            <label><input type="checkbox" id="becomePromoter" name="成為推廣者" value="是"> 成為推廣者 (需提供銀行存摺與身份證影本)</label>
-        </div>
-
-        <div class="form-group" id="promoterUploadSection" style="display: none;">
-            <p class="info-text" style="color:red; font-weight:bold;">您勾選了成為推廣者，必須提供與本人相符的銀行存摺影本和身分證正反面，請上傳以下資料：</p>
-            <div class="file-upload-group">
-                <label for="bankbookFile" class="file-label required">銀行存摺影本 (照片或PDF):</label>
-                <input type="file" id="bankbookFile" name="銀行存摺影本" accept="image/*,.pdf">
-                <div class="file-name" id="bankbookFileName">未選擇檔案</div>
-                <div class="upload-status" id="bankbookUploadStatus"></div>
-                <input type="hidden" id="bankbookFileUrl" name="銀行存摺影本連結">
-            </div>
-            <div class="file-upload-group">
-                <label for="idFrontFile" class="file-label required">身分證正面影本 (照片或PDF):</label>
-                <input type="file" id="idFrontFile" name="身分證正面影本" accept="image/*,.pdf">
-                <div class="file-name" id="idFrontFileName">未選擇檔案</div>
-                <div class="upload-status" id="idFrontUploadStatus"></div>
-                <input type="hidden" id="idFrontFileUrl" name="身分證正面影本連結">
-            </div>
-            <div class="file-upload-group">
-                <label for="idBackFile" class="file-label required">身分證反面影本 (照片或PDF):</label>
-                <input type="file" id="idBackFile" name="身分證反面影本" accept="image/*,.pdf">
-                <div class="file-name" id="idBackFileName">未選擇檔案</div>
-                <div class="upload-status" id="idBackUploadStatus"></div>
-                <input type="hidden" id="idBackFileUrl" name="身分證反面影本連結">
-            </div>
-        </div>
-
         <div class="form-group no-border">
             <div class="info-text" style="font-size:0.85em; background-color:#fff0f5; border-left-color:#ffb6c1;">
                 <p style="font-weight:bold; color:#dc3545;">📜 課程報名條款與免責聲明（請務必詳閱）</p>
@@ -399,106 +323,12 @@
 </div>
 
 <script>
-    // ***重要：將以下兩個 URL 替換為您在 Google Apps Script 部署後取得的網路應用程式 URL***
+    // ***重要：將以下 URL 替換為您在 Google Apps Script 部署後取得的網路應用程式 URL***
     const TEXT_DATA_SERVICE_URL = 'https://script.google.com/macros/s/AKfycbyBj-dVglkexvf4sjTemeg4sQbHeI4aJvWt1x9v83AFrUXCnkkvF7Szfp1ykQKJWBNo/exec'; 
-    const FILE_UPLOAD_SERVICE_URL = 'https://script.google.com/macros/s/AKfycbyvrqFkDTOIgCQa_mjlSPX9Ld8gSGiTNctWJlpzgwKN5BEKI1YMnLufLOofAEOIXp_Sig/exec';
 
     const registrationForm = document.getElementById('registrationForm');
     const responseMessage = document.getElementById('response-message');
     const submitButton = document.getElementById('submitButton');
-
-    // 新增 推廣者 選項相關元素
-    const becomePromoterCheckbox = document.getElementById('becomePromoter');
-    const promoterUploadSection = document.getElementById('promoterUploadSection');
-
-    // 檔案上傳相關元素 (input, 檔案名稱顯示, 上傳狀態顯示, 儲存 URL 的隱藏欄位)
-    const bankbookFile = document.getElementById('bankbookFile');
-    const idFrontFile = document.getElementById('idFrontFile');
-    const idBackFile = document.getElementById('idBackFile');
-
-    const bankbookFileName = document.getElementById('bankbookFileName');
-    const idFrontFileName = document.getElementById('idFrontFileName');
-    const idBackFileName = document.getElementById('idBackFileName');
-
-    const bankbookUploadStatus = document.getElementById('bankbookUploadStatus');
-    const idFrontUploadStatus = document.getElementById('idFrontUploadStatus');
-    const idBackUploadStatus = document.getElementById('idBackUploadStatus');
-
-    const bankbookFileUrl = document.getElementById('bankbookFileUrl');
-    const idFrontFileUrl = document.getElementById('idFrontFileUrl');
-    const idBackFileUrl = document.getElementById('idBackFileUrl');
-
-    // 監聽「成為推廣者」Checkbox 的變化
-    becomePromoterCheckbox.addEventListener('change', function() {
-        if (this.checked) {
-            promoterUploadSection.style.display = 'block'; // 顯示上傳區塊
-            // 將檔案上傳設為必填
-            bankbookFile.required = true;
-            idFrontFile.required = true;
-            idBackFile.required = true;
-            // 檔案上傳的 label 也加上 required 樣式
-            bankbookFile.previousElementSibling.classList.add('required');
-            idFrontFile.previousElementSibling.classList.add('required');
-            idBackFile.previousElementSibling.classList.add('required');
-        } else {
-            promoterUploadSection.style.display = 'none'; // 隱藏上傳區塊
-            // 取消檔案上傳必填
-            bankbookFile.required = false;
-            idFrontFile.required = false;
-            idBackFile.required = false;
-            // 移除檔案上傳 label 的 required 樣式
-            bankbookFile.previousElementSibling.classList.remove('required');
-            idFrontFile.previousElementSibling.classList.remove('required');
-            idBackFile.previousElementSibling.classList.remove('required');
-            // 清空已選檔案和連結，以及上傳狀態
-            bankbookFile.value = ''; bankbookFileName.textContent = '未選擇檔案'; bankbookUploadStatus.textContent = ''; bankbookFileUrl.value = '';
-            idFrontFile.value = ''; idFrontFileName.textContent = '未選擇檔案'; idFrontUploadStatus.textContent = ''; idFrontFileUrl.value = '';
-            idBackFile.value = ''; idBackFileName.textContent = '未選擇檔案'; idBackUploadStatus.textContent = ''; idBackFileUrl.value = '';
-        }
-    });
-
-    // 監聽檔案選擇事件，更新檔案名稱顯示
-    bankbookFile.addEventListener('change', () => { bankbookFileName.textContent = bankbookFile.files.length > 0 ? bankbookFile.files[0].name : '未選擇檔案'; });
-    idFrontFile.addEventListener('change', () => { idFrontFileName.textContent = idFrontFile.files.length > 0 ? idFrontFile.files[0].name : '未選擇檔案'; });
-    idBackFile.addEventListener('change', () => { idBackFileName.textContent = idBackFile.files.length > 0 ? idBackFile.files[0].name : '未選擇檔案'; });
-
-
-    // 異步函數：用於上傳單個檔案到 Google Drive
-    async function uploadFile(file, statusElement, urlHiddenInput) {
-        if (!file) return { success: false, url: '', message: '未選擇檔案' };
-
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        uploadFormData.append('fileName', file.name); // 傳送原始檔名
-
-        statusElement.className = 'upload-status uploading';
-        statusElement.textContent = '上傳中...';
-        urlHiddenInput.value = ''; // 上傳前清空舊的URL
-
-        try {
-            const response = await fetch(FILE_UPLOAD_SERVICE_URL, {
-                method: 'POST',
-                body: uploadFormData
-            });
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                statusElement.className = 'upload-status success';
-                statusElement.textContent = '上傳成功!';
-                urlHiddenInput.value = data.fileUrl; // 將檔案 URL 存入隱藏欄位
-                return { success: true, url: data.fileUrl };
-            } else {
-                statusElement.className = 'upload-status error';
-                statusElement.textContent = '上傳失敗: ' + data.message;
-                return { success: false, message: data.message };
-            }
-        } catch (error) {
-            statusElement.className = 'upload-status error';
-            statusElement.textContent = '上傳失敗: 網路錯誤或伺服器問題。';
-            console.error('File upload fetch error:', error);
-            return { success: false, message: error.message };
-        }
-    }
 
     // 主表單提交事件處理函數
     registrationForm.addEventListener('submit', async function(e) {
@@ -514,7 +344,7 @@
         // 1. 檢查必填的多選框組是否至少選擇了一個
         const requiredCheckboxGroups = document.querySelectorAll('input[type="hidden"][data-required-checkbox-group]');
         for (const hiddenInput of requiredCheckboxGroups) {
-            const groupName = hiddenInput.dataset.requiredCheckboxGroup; // 注意這裡的dataset屬性名稱是camelCase
+            const groupName = hiddenInput.dataset.requiredCheckboxGroup;
             const groupCheckboxes = document.querySelectorAll(`input[name="${groupName}"][type="checkbox"]`);
             const isAnyChecked = Array.from(groupCheckboxes).some(cb => cb.checked);
             if (!isAnyChecked) {
@@ -533,47 +363,18 @@
             submitButton.disabled = false;
             return; // 阻止表單提交
         }
-
-        // 3. 如果勾選了「成為推廣者」，則檢查並上傳檔案
-        if (becomePromoterCheckbox.checked) {
-            // 檢查是否所有檔案都已選擇 (因為現在是必填)
-            if (!bankbookFile.files.length || !idFrontFile.files.length || !idBackFile.files.length) {
-                responseMessage.className = 'error-message';
-                responseMessage.textContent = '您勾選了成為推廣者，請上傳銀行存摺影本及身分證正反面影本。';
-                submitButton.disabled = false;
-                return; // 阻止表單提交
-            }
-
-            responseMessage.textContent = '檔案上傳中，請稍候... (這可能需要一些時間)';
-            // 逐個上傳檔案，使用 Promise.all 等待所有上傳完成
-            const uploadResults = await Promise.all([
-                uploadFile(bankbookFile.files[0], bankbookUploadStatus, bankbookFileUrl),
-                uploadFile(idFrontFile.files[0], idFrontUploadStatus, idFrontFileUrl),
-                uploadFile(idBackFile.files[0], idBackUploadStatus, idBackFileUrl)
-            ]);
-
-            // 檢查是否有任何檔案上傳失敗
-            const allFilesUploaded = uploadResults.every(result => result.success);
-            if (!allFilesUploaded) {
-                responseMessage.className = 'error-message';
-                responseMessage.textContent = '檔案上傳失敗，請檢查檔案格式或大小。';
-                submitButton.disabled = false;
-                return; // 阻止表單提交
-            }
-        }
-        // --- 結束前端驗證和檔案上傳 ---
-
+        // --- 結束前端驗證 ---
 
         responseMessage.textContent = '資料送出中，請稍候...';
 
         const formData = new FormData(registrationForm);
-
+        
         // 處理多選框 (checkboxes) 的值，將多個選中的值合併為一個逗號分隔的字串
         const allCheckboxes = registrationForm.querySelectorAll('input[type="checkbox"]');
         const checkboxGroupValues = {}; 
         allCheckboxes.forEach(checkbox => {
-            // 排除「條款同意聲明」和「成為推廣者」的 checkbox，因為它們只會是單一勾選狀態
-            if (checkbox.checked && checkbox.id !== 'termsAgreement' && checkbox.id !== 'becomePromoter') { 
+            // 排除「條款同意聲明」的 checkbox，因為它只會是單一勾選狀態
+            if (checkbox.checked && checkbox.id !== 'termsAgreement') { 
                 if (!checkboxGroupValues[checkbox.name]) {
                     checkboxGroupValues[checkbox.name] = [];
                 }
@@ -585,13 +386,7 @@
         for (const name in checkboxGroupValues) {
             formData.set(name, checkboxGroupValues[name].join(', '));
         }
-        // 「條款同意聲明」和「成為推廣者」的 value 已經在 HTML 中設置，會被 FormData 正常處理
-
-        // 將檔案的 URL 從隱藏欄位加入 FormData，以便傳送給文字數據服務
-        // 只有在有檔案上傳且成功時，這些隱藏欄位才會有值
-        formData.set('銀行存摺影本連結', bankbookFileUrl.value);
-        formData.set('身分證正面影本連結', idFrontFileUrl.value);
-        formData.set('身分證反面影本連結', idBackFileUrl.value);
+        // 「條款同意聲明」的 value 已經在 HTML 中設置，會被 FormData 正常處理
 
 
         // 使用 Fetch API 將表單數據 POST 到 Apps Script (文字數據服務)
@@ -606,20 +401,6 @@
                 responseMessage.className = 'success-message';
                 responseMessage.textContent = '報名成功！感謝您的填寫。';
                 registrationForm.reset(); // 清空表單內容
-                // 重置推廣者相關的顯示和必填狀態
-                becomePromoterCheckbox.checked = false; // 取消勾選推廣者
-                promoterUploadSection.style.display = 'none'; // 隱藏上傳區塊
-                bankbookFile.required = false;
-                idFrontFile.required = false;
-                idBackFile.required = false;
-                // 移除檔案上傳 label 的 required 樣式
-                bankbookFile.previousElementSibling.classList.remove('required');
-                idFrontFile.previousElementSibling.classList.remove('required');
-                idBackFile.previousElementSibling.classList.remove('required');
-                // 清空檔案選擇顯示和狀態
-                bankbookFileName.textContent = '未選擇檔案'; bankbookUploadStatus.textContent = ''; bankbookFileUrl.value = '';
-                idFrontFileName.textContent = '未選擇檔案'; idFrontUploadStatus.textContent = ''; idFrontFileUrl.value = '';
-                idBackFileName.textContent = '未選擇檔案'; idBackUploadStatus.textContent = ''; idBackFileUrl.value = '';
             } else {
                 responseMessage.className = 'error-message';
                 // 顯示 Apps Script 返回的錯誤訊息，如果有的話
